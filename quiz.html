@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz{% endblock %}
+
+{% block content %}
+<div class="panel" id="quiz-setup">
+  <p class="panel-desc">Enter a topic or passage to generate a quiz. Answer all questions, then submit to see your score.</p>
+  <form class="feature-form" id="quiz-create-form">
+    <label for="topic_or_text">Topic or Passage</label>
+    <textarea id="topic_or_text" name="topic_or_text" rows="4" placeholder="e.g. Python lists and dictionaries" required></textarea>
+    <label class="inline-label">
+      Number of questions:
+      <select name="num_questions">
+        <option value="3">3</option>
+        <option value="5" selected>5</option>
+      </select>
+    </label>
+    <button type="submit" class="btn-primary">Create Quiz</button>
+  </form>
+</div>
+
+<div id="quiz-area" class="panel hidden">
+  <div class="quiz-header">
+    <h3 id="quiz-title">Your Quiz</h3>
+    <button type="button" class="btn-secondary" id="new-quiz-btn">New Quiz</button>
+  </div>
+  <form id="quiz-answer-form"></form>
+  <button type="submit" form="quiz-answer-form" class="btn-primary btn-submit-quiz" id="submit-quiz-btn">Submit Quiz</button>
+</div>
+
+<div id="quiz-results" class="panel hidden"></div>
+<div id="quiz-error" class="result-area hidden"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentQuizId = null;
+
+  const setupPanel = document.getElementById("quiz-setup");
+  const quizArea = document.getElementById("quiz-area");
+  const quizResults = document.getElementById("quiz-results");
+  const quizError = document.getElementById("quiz-error");
+  const answerForm = document.getElementById("quiz-answer-form");
+
+  document.getElementById("quiz-create-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button[type=submit]");
+    const fd = new FormData(e.target);
+    btn.disabled = true;
+    hideEl(quizError);
+    hideEl(quizResults);
+
+    try {
+      const json = await apiPost("/quiz", {
+        topic_or_text: fd.get("topic_or_text").trim(),
+        num_questions: parseInt(fd.get("num_questions"), 10),
+      });
+
+      if (!json.success) {
+        showError(quizError, json.error);
+        return;
+      }
+
+      currentQuizId = json.data.quiz_id;
+      renderQuizQuestions(json.data.questions);
+      hideEl(setupPanel);
+      showEl(quizArea);
+    } catch {
+      showError(quizError, "Network error. Is the server running?");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderQuizQuestions(questions) {
+    answerForm.innerHTML = questions.map((q, idx) => {
+      const opts = Object.entries(q.options || {})
+        .map(([key, val]) => `
+          <label class="option-label">
+            <input type="radio" name="q${idx}" value="${key}" required />
+            <span><strong>${escapeHtml(key)}.</strong> ${escapeHtml(val)}</span>
+          </label>
+        `).join("");
+      return `
+        <div class="quiz-item">
+          <p class="quiz-question"><strong>Q${idx + 1}.</strong> ${escapeHtml(q.question)}</p>
+          <div class="quiz-options">${opts}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  answerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("submit-quiz-btn");
+    const answers = [];
+    const count = answerForm.querySelectorAll(".quiz-item").length;
+
+    for (let i = 0; i < count; i++) {
+      const selected = answerForm.querySelector(`input[name="q${i}"]:checked`);
+      if (!selected) {
+        showError(quizError, "Please answer all questions before submitting.");
+        return;
+      }
+      answers.push(selected.value);
+    }
+
+    btn.disabled = true;
+    hideEl(quizError);
+
+    try {
+      const json = await apiPost("/quiz/submit", { quiz_id: currentQuizId, answers });
+
+      if (!json.success) {
+        showError(quizError, json.error);
+        return;
+      }
+
+      renderQuizResults(json.data);
+      hideEl(quizArea);
+      showEl(quizResults);
+    } catch {
+      showError(quizError, "Network error. Is the server running?");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderQuizResults(data) {
+    const pct = data.percentage;
+    let scoreClass = "score-good";
+    if (pct < 50) scoreClass = "score-low";
+    else if (pct < 80) scoreClass = "score-mid";
+
+    const items = (data.results || []).map((r, idx) => {
+      const status = r.is_correct ? "correct" : "wrong";
+      const icon = r.is_correct ? "✓" : "✗";
+      return `
+        <div class="quiz-review ${status}">
+          <p class="quiz-question"><strong>Q${idx + 1}.</strong> ${escapeHtml(r.question)} ${icon}</p>
+          <p class="review-detail">Your answer: <strong>${escapeHtml(r.your_answer)}</strong> — ${escapeHtml(r.options[r.your_answer] || "")}</p>
+          ${!r.is_correct ? `<p class="review-detail correct-text">Correct answer: <strong>${escapeHtml(r.correct_answer)}</strong> — ${escapeHtml(r.options[r.correct_answer] || "")}</p>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    quizResults.innerHTML = `
+      <div class="score-card ${scoreClass}">
+        <div class="score-big">${data.score} / ${data.total}</div>
+        <div class="score-pct">${pct}%</div>
+        <p>${pct >= 80 ? "Excellent work!" : pct >= 50 ? "Good effort! Review the ones you missed." : "Keep practicing — you'll get there!"}</p>
+      </div>
+      <h3>Review</h3>
+      ${items}
+      <button type="button" class="btn-primary" id="retry-quiz-btn">Create New Quiz</button>
+    `;
+
+    document.getElementById("retry-quiz-btn").addEventListener("click", resetQuiz);
+  }
+
+  function resetQuiz() {
+    currentQuizId = null;
+    answerForm.innerHTML = "";
+    hideEl(quizArea);
+    hideEl(quizResults);
+    hideEl(quizError);
+    showEl(setupPanel);
+    document.getElementById("quiz-create-form").reset();
+  }
+
+  document.getElementById("new-quiz-btn").addEventListener("click", resetQuiz);
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero-banner">
+  <div class="hero-content">
+    <span class="hero-badge">🚀 AI-Powered Learning</span>
+    <h2 class="hero-title">Learn Smarter with <span class="gradient-text">EduGenie</span></h2>
+    <p class="hero-desc">Your personal AI tutor — ask questions, explore topics, take quizzes, summarize notes, and build custom learning paths.</p>
+    <div class="hero-actions">
+      <a href="/qa" class="btn-primary btn-lg">Start Learning</a>
+      <a href="/quiz" class="btn-outline btn-lg">Take a Quiz</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="floating-card fc-1">❓ Q&amp;A</div>
+    <div class="floating-card fc-2">📝 Quiz</div>
+    <div class="floating-card fc-3">🗺️ Path</div>
+  </div>
+</section>
+
+<section class="stats-row">
+  <div class="stat-item"><strong>5</strong><span>AI Features</span></div>
+  <div class="stat-item"><strong>Gemini</strong><span>Powered</span></div>
+  <div class="stat-item"><strong>Free</strong><span>to Use</span></div>
+</section>
+
+<h3 class="section-heading">Explore Features</h3>
+<div class="feature-grid">
+  <a href="/qa" class="feature-card card-qa">
+    <div class="feature-card-icon-wrap">❓</div>
+    <h3>Ask a Question</h3>
+    <p>Get clear answers with explanations and extra learning points.</p>
+    <span class="card-arrow">→</span>
+  </a>
+  <a href="/explain" class="feature-card card-explain">
+    <div class="feature-card-icon-wrap">💡</div>
+    <h3>Explain a Topic</h3>
+    <p>Understand any concept with definitions, examples, and key points.</p>
+    <span class="card-arrow">→</span>
+  </a>
+  <a href="/quiz" class="feature-card card-quiz">
+    <div class="feature-card-icon-wrap">📝</div>
+    <h3>Take a Quiz</h3>
+    <p>Generate MCQs, answer them, and see your score instantly.</p>
+    <span class="card-arrow">→</span>
+  </a>
+  <a href="/summarize" class="feature-card card-summarize">
+    <div class="feature-card-icon-wrap">📄</div>
+    <h3>Summarize Text</h3>
+    <p>Turn long educational content into concise summaries.</p>
+    <span class="card-arrow">→</span>
+  </a>
+  <a href="/learning-path" class="feature-card card-path">
+    <div class="feature-card-icon-wrap">🗺️</div>
+    <h3>Learning Path</h3>
+    <p>Get a structured roadmap from beginner to advanced.</p>
+    <span class="card-arrow">→</span>
+  </a>
+</div>
+{% endblock %}

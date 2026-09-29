@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Ask a Question{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <p class="panel-desc">Enter any educational question and get a student-friendly answer with explanation.</p>
+  <form class="feature-form" id="qa-form">
+    <label for="question">Your Question</label>
+    <textarea id="question" name="question" rows="4" placeholder="e.g. What is photosynthesis?" required></textarea>
+    <button type="submit" class="btn-primary">Get Answer</button>
+  </form>
+  <div id="result" class="result-area hidden"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  initFeatureForm("qa-form", "/qa", (data, el) => {
+    el.innerHTML = `
+      <h3>Answer</h3>
+      <p class="highlight">${escapeHtml(data.direct_answer || "")}</p>
+      <h4>Explanation</h4>
+      <p>${escapeHtml(data.explanation || "")}</p>
+      ${renderList("Extra Learning", data.extra_learning)}
+    `;
+  }, (fd) => ({ question: fd.get("question").trim() }));
+</script>
+{% endblock %}

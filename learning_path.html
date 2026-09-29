@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Path{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <p class="panel-desc">Enter a topic to get a structured learning roadmap from beginner to advanced with resources.</p>
+  <form class="feature-form" id="learning-path-form">
+    <label for="topic">Topic</label>
+    <input type="text" id="topic" name="topic" placeholder="e.g. Machine Learning, SQL, Python" required />
+    <button type="submit" class="btn-primary">Get Learning Path</button>
+  </form>
+  <div id="result" class="result-area hidden"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  initFeatureForm("learning-path-form", "/learn/recommendations", (data, el) => {
+    function levelBlock(title, level) {
+      if (!level) return "";
+      return `
+        <div class="level-block">
+          <h4>${escapeHtml(title)}</h4>
+          <p>${escapeHtml(level.description || "")}</p>
+          ${renderList("Topics", level.topics)}
+        </div>
+      `;
+    }
+
+    const resources = (data.resources || []).map(r =>
+      `<li><strong>${escapeHtml(r.name || "")}</strong> (${escapeHtml(r.type || "")}) — ${escapeHtml(r.description || "")}</li>`
+    ).join("");
+
+    el.innerHTML = `
+      <h3>Learning Path: ${escapeHtml(data.topic || "")}</h3>
+      ${levelBlock("Beginner", data.beginner)}
+      ${levelBlock("Intermediate", data.intermediate)}
+      ${levelBlock("Advanced", data.advanced)}
+      ${resources ? `<h4>Resources</h4><ul>${resources}</ul>` : ""}
+      <h4>Advice</h4>
+      <p>${escapeHtml(data.advice || "")}</p>
+    `;
+  }, (fd) => ({ topic: fd.get("topic").trim() }));
+</script>
+{% endblock %}

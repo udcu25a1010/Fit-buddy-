@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Summarize{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <p class="panel-desc">Paste educational text to get a concise summary with key points and important concepts.</p>
+  <form class="feature-form" id="summarize-form">
+    <label for="text">Educational Text</label>
+    <textarea id="text" name="text" rows="8" placeholder="Paste your notes, article, or textbook content here..." required></textarea>
+    <button type="submit" class="btn-primary">Summarize</button>
+  </form>
+  <div id="result" class="result-area hidden"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  initFeatureForm("summarize-form", "/summarize", (data, el) => {
+    el.innerHTML = `
+      <h3>Summary</h3>
+      <p>${escapeHtml(data.short_summary || "")}</p>
+      ${renderList("Key Points", data.key_points)}
+      ${renderList("Important Concepts", data.concepts)}
+    `;
+  }, (fd) => ({ text: fd.get("text").trim() }));
+</script>
+{% endblock %}

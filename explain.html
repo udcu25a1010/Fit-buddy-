@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Explain a Topic{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <p class="panel-desc">Enter a topic or concept to get a simplified, beginner-friendly explanation.</p>
+  <form class="feature-form" id="explain-form">
+    <label for="topic">Topic or Concept</label>
+    <input type="text" id="topic" name="topic" placeholder="e.g. Recursion in programming" required />
+    <button type="submit" class="btn-primary">Explain Topic</button>
+  </form>
+  <div id="result" class="result-area hidden"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  initFeatureForm("explain-form", "/explain", (data, el) => {
+    el.innerHTML = `
+      <h3>Definition</h3>
+      <p class="highlight">${escapeHtml(data.definition || "")}</p>
+      <h4>Simple Explanation</h4>
+      <p>${escapeHtml(data.simple_explanation || "")}</p>
+      <h4>Example</h4>
+      <p>${escapeHtml(data.example || "")}</p>
+      ${renderList("Key Points", data.key_points)}
+    `;
+  }, (fd) => ({ topic: fd.get("topic").trim() }));
+</script>
+{% endblock %}
